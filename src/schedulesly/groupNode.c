@@ -38,3 +38,20 @@ void add_group(GroupNode* head, Group* group) {
     current->next = new_node;
 }
 
+//Sort the groups by arriving time
+void sort_group_list(GroupNode* head) {
+    GroupNode* current = head->next; // Si tienes un nodo cabeza ficticio, empieza con el siguiente
+    while (current != NULL) {
+        GroupNode* next = current->next;
+        while (next != NULL) {
+            if (current->group->time_arrival > next->group->time_arrival) {
+                // Intercambiar los grupos
+                Group* temp = current->group;
+                current->group = next->group;
+                next->group = temp;
+            }
+            next = next->next;
+        }
+        current = current->next;
+    }
+}

@@ -152,6 +152,12 @@ int main(int argc, char const *argv[])
 	GroupNode* group_list_pending;
 	group_list_pending = readFileAndCreatStructures(file_name);
 
+	printf("Grupos creados\n");
+	printAllGroups(group_list_pending);
+
+	//Sort the groups by arrival time
+	sort_group_list(group_list_pending);
+	printf("Grupos ordenados por tiempo de llegada\n");
 	printAllGroups(group_list_pending);
 
 	// Liberar memoria
