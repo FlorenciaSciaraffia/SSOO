@@ -9,18 +9,12 @@
 #include "printing.h"
 
 
-//function to read the input file and create the groups and processes. 
-//readFileAndCreatStructures with fopen y fscanf
-//create the groups and processes with the functions in the group.c and process.c files
-//construyo la función recursiva que lee los hijos :
 void readChilds(FILE *file, Process* father, int nh){
 	 for (int i = 0; i < nh; i++) {
 		printf("PROCESO EN CREACION\n");
-
-		//Si estamos en los hijos del padre maximo y no es el primer hijo ni el ultimo , hay que leer ce y agregarlo a la lista de ce
-		if (father->is_father_max && i > 0)
-		{	
-			printf("Es el padre maximo y no es el primer hijo ni el ultimo\n");
+		if (i > 0)
+		{
+			printf("Es el padre maximo y no es el primer hijo\n");
 			int ce;
 			fscanf(file, "%d", &ce);
 			printf("CE: %d\n", ce);
@@ -30,18 +24,12 @@ void readChilds(FILE *file, Process* father, int nh){
 		int child_ci, child_nh, child_cf;
 		fscanf(file, "%d %d", &child_ci, &child_nh);
 		printf("CI: %d - NH: %d\n", child_ci, child_nh);
-		//crear el proceso hijo
 		Process* new_process_child = create_process(child_ci, child_nh, 0, false);
-		//agregar el proceso hijo al padre
 		father->children[i] = new_process_child;
-		//imprimir el proceso hijo creado
 		printf("Proceso hijo creado: %d - %d - %ls - %d\n", new_process_child->ci, new_process_child->nh, new_process_child->ce, new_process_child->cf);
-
-		
 
 		if (child_nh == 0)
 		{
-			//NO hay hijos leo solo el input que viene y lo guardo como el cf del hijo
 			fscanf(file, "%d", &child_cf);
 			printf("CF: %d\n", child_cf);
 			new_process_child->cf = child_cf;
@@ -49,18 +37,12 @@ void readChilds(FILE *file, Process* father, int nh){
 		}
 		else
 		{
-			readChilds(file, new_process_child, child_nh);
-			//Lee el cf despues de construir todos los hijos 
+			readChilds(file, new_process_child, child_nh); 
 			fscanf(file, "%d", &child_cf);
 			printf("CF: %d\n", child_cf);
-			//aCTUALIZAR EL VALOR
 			new_process_child->cf = child_cf;
 		}
-
-		//termina el for
-		//imprimo la info 
-		printf("Proceso aactualizado: %d - %d - %ls - %d\n", new_process_child->ci, new_process_child->nh, new_process_child->ce, new_process_child->cf);
-		
+		printf("Proceso aactualizado: %d - %d - %ls - %d\n", new_process_child->ci, new_process_child->nh, new_process_child->ce, new_process_child->cf);		
 	}
 	return;
 }
@@ -137,34 +119,26 @@ GroupNode* readFileAndCreatStructures(char *file_name){
 }
 
 
-
-
-
-
-
 int main(int argc, char const *argv[])
 {
-	/*Lectura del input: ./testsT0/P2/inputs/in01.txt */
 	char *file_name = (char *)argv[1];
 	InputFile *input_file = read_file(file_name);
 
-	//Declarar group_list_pending
 	GroupNode* group_list_pending;
 	group_list_pending = readFileAndCreatStructures(file_name);
-
-	//Sort the groups by arrival time
+	//Ordeno la lista por tiempo y asigno gid
 	sort_group_list(group_list_pending);
-
-	GroupNode* current = group_list_pending->next;
-	int gid = 1;
-	while (current != NULL) {
-		assign_gid_recursively(current->group->father, gid);
-		current = current->next;
-		gid++;
-	}
+	assign_gid(group_list_pending->next);
 
 	printf("Grupos con el gid asignado\n");
 	printAllGroups(group_list_pending);
+
+	//Ahora empiezo a correr el programa:
+	int tiempo = 0;
+	//Incio lista ligada de grupos que ya han llegado
+	GroupNode* group_list_arrived = init_group_list();
+
+
 
 
 	// Liberar memoria

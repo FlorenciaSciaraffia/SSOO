@@ -55,3 +55,14 @@ void sort_group_list(GroupNode* head) {
         current = current->next;
     }
 }
+
+//Asign gid
+void assign_gid(GroupNode* current) {
+    int gid = 1;
+    while (current != NULL) {
+        assign_gid_recursively(current->group->father, gid);
+		current = current->next;
+		gid++;
+    }
+}
+
