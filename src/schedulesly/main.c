@@ -60,8 +60,9 @@ void readChilds(FILE *file, Process* father, int nh){
 		//termina el for
 		//imprimo la info 
 		printf("Proceso aactualizado: %d - %d - %ls - %d\n", new_process_child->ci, new_process_child->nh, new_process_child->ce, new_process_child->cf);
-
+		
 	}
+	return;
 }
 
 GroupNode* readFileAndCreatStructures(char *file_name){
@@ -122,7 +123,6 @@ GroupNode* readFileAndCreatStructures(char *file_name){
 			//imprimo la info del padre
 			printf("Proceso padre actualizado valor CF: CI:%d - NH:%d - CE:%ls - CF:%d\n", new_process->ci, new_process->nh, new_process->ce, new_process->cf);
 		}
-	fclose(file);
 
 	GroupNode* current = group_list_pending->next; // Si tienes un nodo cabeza ficticio, empieza con el siguiente
     while (current != NULL) {

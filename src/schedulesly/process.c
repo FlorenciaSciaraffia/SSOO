@@ -6,7 +6,7 @@
 // Process* create_process(int ti, int ci, int nh, int ce, int cf);
 
 Process* create_process(int ci, int nh, int cf, bool is_father_max) {
-    Process* new_process = malloc(sizeof(Process)); // Reservamos memoria para el nuevo proceso
+    Process* new_process = (Process*)malloc(sizeof(Process)); // Reservamos memoria para el nuevo proceso
     if (new_process == NULL) {
         // Manejo de error, en caso de que malloc falle
         return NULL;
