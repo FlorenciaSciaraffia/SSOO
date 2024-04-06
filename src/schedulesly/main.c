@@ -119,6 +119,11 @@ GroupNode* readFileAndCreatStructures(char *file_name){
 }
 
 
+
+
+
+
+
 int main(int argc, char const *argv[])
 {
 	char *file_name = (char *)argv[1];
@@ -132,13 +137,7 @@ int main(int argc, char const *argv[])
 
 	printf("Grupos con el gid asignado\n");
 	printAllGroups(group_list_pending);
-
-	//Ahora empiezo a correr el programa:
-	int tiempo = 0;
-	//Incio lista ligada de grupos que ya han llegado
-	GroupNode* group_list_arrived = init_group_list();
-
-
+	
 
 
 	// Liberar memoria
