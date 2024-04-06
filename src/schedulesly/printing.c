@@ -21,7 +21,7 @@ void printProcessStructure(Process* process, int level) {
     }
 
     // Imprimir información del proceso actual
-    printf("Proceso: PID: %d, CI: %d, NH: %d, CF: %d\n", process->pid, process->ci, process->nh, process->cf);
+    printf("Proceso: PID: %d, GID: %d, CI: %d, NH: %d, CF: %d\n", process->pid, process-> gid, process->ci, process->nh, process->cf);
     
     // Si el proceso es padre máximo y tiene hijos, imprimir CE
     if (process->is_father_max && process->nh > 1 && process->ce != NULL) {

@@ -36,3 +36,16 @@ Process* create_process(int ci, int nh, int cf, bool is_father_max) {
     }
     return new_process;
 }
+
+void assign_gid_recursively(Process* process, int gid) {
+    if (process == NULL) return; // Caso base: no hay proceso
+
+    process->gid = gid; // Asigna el gid al proceso actual
+
+    
+    for (int i = 0; i < process->nh; i++) {
+        assign_gid_recursively(process->children[i], gid);
+    }
+}
+
+

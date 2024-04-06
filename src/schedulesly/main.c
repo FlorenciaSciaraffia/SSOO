@@ -152,13 +152,20 @@ int main(int argc, char const *argv[])
 	GroupNode* group_list_pending;
 	group_list_pending = readFileAndCreatStructures(file_name);
 
-	printf("Grupos creados\n");
-	printAllGroups(group_list_pending);
-
 	//Sort the groups by arrival time
 	sort_group_list(group_list_pending);
-	printf("Grupos ordenados por tiempo de llegada\n");
+
+	GroupNode* current = group_list_pending->next;
+	int gid = 1;
+	while (current != NULL) {
+		assign_gid_recursively(current->group->father, gid);
+		current = current->next;
+		gid++;
+	}
+
+	printf("Grupos con el gid asignado\n");
 	printAllGroups(group_list_pending);
+
 
 	// Liberar memoria
 	input_file_destroy(input_file);
