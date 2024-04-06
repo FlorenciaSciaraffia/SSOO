@@ -66,3 +66,17 @@ void assign_gid(GroupNode* current) {
     }
 }
 
+
+//Delete
+void delete_group(GroupNode* head, int gid) {
+    GroupNode* current = head;
+    while (current->next != NULL) {
+        if (current->next->group->gid == gid) {
+            GroupNode* temp = current->next;
+            current->next = current->next->next;
+            free(temp);
+            return;
+        }
+        current = current->next;
+    }
+}

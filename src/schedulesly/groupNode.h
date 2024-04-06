@@ -17,6 +17,8 @@ GroupNode* init_group_list();
 //Agragar grupos a la lista
 void add_group(GroupNode* head, Group* group);
 
+//Borrar grupo de la lista
+void delete_group(GroupNode* head, int gid);
 //Sort
 void sort_group_list(GroupNode* head);
 

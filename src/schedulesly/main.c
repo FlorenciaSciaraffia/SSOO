@@ -130,6 +130,11 @@ int main(int argc, char const *argv[])
 	InputFile *input_file = read_file(file_name);
 
 	GroupNode* group_list_pending;
+	GroupNode* group_list_active;
+	GroupNode* group_list_ready;
+
+	group_list_active = init_group_list();
+	group_list_ready = init_group_list();
 	group_list_pending = readFileAndCreatStructures(file_name);
 	//Ordeno la lista por tiempo y asigno gid
 	sort_group_list(group_list_pending);
@@ -137,7 +142,28 @@ int main(int argc, char const *argv[])
 
 	printf("Grupos con el gid asignado\n");
 	printAllGroups(group_list_pending);
-	
+
+
+	int tiempo = 0;
+
+	//Función check en el tiempo que este y ver si hay uno o más grupos pendientes que se deban agregar a la lista active
+	//hacer funcion
+	//check_pending_groups(tiempo, group_list_pending, group_list_active);
+	// void check_pending_groups(tiempo, group_list_pending, group_list_active){
+	// 	GroupNode* current = group_list_pending->next;
+	// 	while (current != NULL) {
+	// 		if (current->group->time_arrival == tiempo) {
+	// 			GroupNode* next = current->next;
+	// 			//Mover el grupo de la lista de pendientes a la lista de activos
+	// 			add_group(group_list_active, current->group);
+	// 			//Eliminar el grupo de la lista de pendientes
+	// 			delete_group(group_list_pending, current->group->gid);
+	// 			current = next;
+	// 		} else {
+	// 			current = current->next;
+	// 		}
+	// 	}
+	// }
 
 
 	// Liberar memoria
