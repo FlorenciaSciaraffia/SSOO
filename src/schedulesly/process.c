@@ -14,6 +14,10 @@ Process* create_process(int ci, int nh, int cf, bool is_father_max) {
     new_process->ci = ci;
     new_process->nh = nh;
     new_process->is_father_max = is_father_max;
+    //Asigno el state = WAITING que es una strcut que se encuentra en process.h
+    new_process->state = READY;
+    new_process->pid = -1;
+    new_process->ppid = -1;
     //construir array ce que es del tamaño nh - 1 
     //if is father max la lista es de nh-1 si no el atributo ce va a ser una lista vacia
     if (is_father_max && nh > 0) {

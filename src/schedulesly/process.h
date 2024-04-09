@@ -19,11 +19,8 @@ typedef struct Process {
     int ci; //Tiempo de CPU antes de crear un hijo
     int nh; //Numero de hijos que creara
     bool is_father_max; //Si es el padre máximo
-    //Array con los ce que es el tiempo que correrá entre creación de hijos solo si es padre máximo y tiene el tamaño de nh -1 
-    int* ce;
-    int cf; //Tiempo que correra despues de crear todos sus hijos
-    //Cada proceso tiene un array que tiene punteros a todos sus hijos y cm es array es del tamaño de nh 
-    //ARRAY DE PUNTEROS A PROCESOS NO UNA LISTA LIGADA
+    int* ce; //tiempo que corre entre sus hijos
+    int cf;  //tiempo que corre despues dde crear y correr todos los hijos
     struct Process** children;
 } Process;
 
