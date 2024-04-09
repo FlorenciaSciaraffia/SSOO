@@ -31,3 +31,6 @@ void move_first_pending_to_active_end(GroupNode* pending, GroupNode* active);
 
 //check pending groups
 void check_and_move_groups(GroupNode* pending, GroupNode* active, int currentTime);
+
+//move group to end
+void move_group_to_end(GroupNode* head_active, GroupNode* head_pending, Group* groupToMove);

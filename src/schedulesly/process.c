@@ -18,6 +18,9 @@ Process* create_process(int ci, int nh, int cf, bool is_father_max) {
     new_process->state = READY;
     new_process->pid = -1;
     new_process->ppid = -1;
+    new_process->time_in_cpu = 0;
+    // new_process->line_ci = line_ci;
+    // new_process->arg_ci = arg_ci;
     //construir array ce que es del tamaño nh - 1 
     //if is father max la lista es de nh-1 si no el atributo ce va a ser una lista vacia
     if (is_father_max && nh > 0) {

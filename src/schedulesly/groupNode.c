@@ -122,3 +122,23 @@ void check_and_move_groups(GroupNode* pending, GroupNode* active, int currentTim
         }
     } while (movedGroup); // Continuar mientras se muevan grupos.
 }
+
+
+void move_group_to_end(GroupNode* head_active, GroupNode* head_pending, Group* groupToMove) {
+    GroupNode* current = head_active;
+    GroupNode* previous = NULL;
+    while (current != NULL) {
+        if (current->group == groupToMove) {
+            if (previous == NULL) {
+                head_active->next = current->next;
+            } else {
+                previous->next = current->next;
+            }
+            add_group_to_end(head_pending, groupToMove);
+            break;
+        }
+        previous = current;
+        current = current->next;
+    }
+    
+}

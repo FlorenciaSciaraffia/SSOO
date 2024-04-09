@@ -12,6 +12,7 @@ typedef struct {
     int qmin;
     int qdelta;
     //PADRE que es un proceso
+    int cantidad_procesos;
     Process* father;
 } Group;
 
@@ -20,3 +21,11 @@ typedef struct {
 //create_group function
 Group* create_group(int time_arrival, int qstart, int qmin, int qdelta);
 
+//contar procesos
+void count_processes(Group* group);
+
+//Report processes
+void report_processes_not_finished(Process* process, int depth);
+
+//Report processes findihes
+void report_processes_finished(Process* process, int depth);

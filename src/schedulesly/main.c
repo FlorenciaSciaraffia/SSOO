@@ -107,6 +107,9 @@ GroupNode* readFileAndCreatStructures(char *file_name){
 			printf("Proceso padre actualizado valor CF: CI:%d - NH:%d - CE:%ls - CF:%d\n", new_process->ci, new_process->nh, new_process->ce, new_process->cf);
 		}
 
+		//Funcion que cuenta los numeros de procesos y los asigna al grupo
+		count_processes(new_group);
+
 	GroupNode* current = group_list_pending->next; // Si tienes un nodo cabeza ficticio, empieza con el siguiente
     while (current != NULL) {
         if (current->group->father->is_father_max) {
@@ -155,10 +158,15 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo){
 	process->ci -= timeToProcess;
 	tiempo_proceso += timeToProcess;
 	qstart -= timeToProcess;
+	//Actulizar estado a running
+	process->state = RUNNING;
 
 	//si quedan unidades de trabajo por trabajar y hay hijos por recorrer: 
 	if (qstart > 0 && process->nh > 0)
-	{
+	{	
+		process->state = WAITING;
+        printf("WAIT %d\n", process->pid);
+
 		//Procesamos los hijos
 		for (int i = 0; i < process->nh && qstart>0 ; i++)
 		{
@@ -179,26 +187,17 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo){
 			}
 		}
 	}
-
+	
 	//Si aun quedan unidades de trabajo procesar el cf
-	if (qstart > 0)
-	{
+	if (qstart > 0 || process->cf == 0)
+	{	
+		process->state = RUNNING;
 		//Procesamos el tiempo antes de crear los hijos, osea el cf
 		int cfToProcess = min(qstart, process->cf);
 		process->cf -= cfToProcess;
 		tiempo_proceso += cfToProcess;
 		qstart -= cfToProcess;
-		//Si termina el cf 
-		if (process->cf == 0)
-		{
-			//Cambia State a FINISHED
-			process->state = FINISHED;
-			//Reportar que termina el proceso
-			//EXIT <PID> TIME <TIEMPO_ACTUAL_SO>
-			printf("END %d TIME %d\n", process->pid, tiempo+tiempo_proceso);
-		}
 	}
-
 	return tiempo_proceso;
 }
 
@@ -212,7 +211,18 @@ int process_group(Group* group, int tiempo){
 	group->qstart = max((group->qstart - group->qdelta), group->qmin);
 	//Reportar tiempo que trabajo el proceso:
 	//RUN <PID> <TIEMPO_TRABAJADO>
-	printf("RUN %d %d\n", currentProcess->pid, tiempo_avanzado);
+	if (tiempo_avanzado > 0)
+	{
+		printf("RUN %d %d\n", currentProcess->pid, tiempo_avanzado);
+	}
+	//Si termino el proceso
+	if (currentProcess->ci == 0 && currentProcess->nh == 0 && currentProcess->cf == 0)
+	{
+		currentProcess->state = FINISHED;
+		printf("END %d TIME %d\n", currentProcess->pid, tiempo + tiempo_avanzado);
+	}
+	//sumar a tiempo cpu el avanzado
+	currentProcess->time_in_cpu += tiempo_avanzado;
 	return tiempo_avanzado;	
 }
 
@@ -242,14 +252,11 @@ int main(int argc, char const *argv[])
 	//Crear e inicializar la lista de grupos ready
 	group_list_ready = init_group_list();
 	
-	
 
 
 	int tiempo = 0;
 
-	//Mientras la simulacion no haya terminado. Osea que no quede niun grupo activo ni pendiente:
-	//while (group_list_pending->next != NULL || group_list_active->next != NULL){
-	while (tiempo<28){
+	while (group_list_pending->next != NULL || group_list_active->next != NULL){
 		int tiempo_anterior = tiempo;
 
 		//Verifico  y activo grupos en el tiempo actual
@@ -278,12 +285,35 @@ int main(int argc, char const *argv[])
 				//Si el en el grupo se ejecuta tiempo, osea avanza 
 				tiempo_anterior = tiempo;
 				int tiempo_avanzado = process_group(current->group, tiempo);
+			
+
+				//Si todos los prcesos del grupo terminaron cambio a lista ready
+				if (current->group->father->state == FINISHED)
+				{
+					// printf("Grupo terminado\n");
+					//Mover el grupo de active a ready
+					move_group_to_end(group_list_active, group_list_ready, current->group);
+					// printf("Grupos activos\n");
+					// printAllGroups(group_list_active);
+					// printf("Grupos ready\n");
+					// printAllGroups(group_list_ready);
+				}
+
+
 				if (tiempo_avanzado == 0)
 				{
 					tiempo_avanzado = 1;
 				}	
-				tiempo += tiempo_avanzado;
 
+				if (group_list_pending->next == NULL && group_list_active->next == NULL)
+				{
+					if (tiempo_avanzado == 0)
+				{
+					tiempo_avanzado = 0;
+				}	
+				} 
+				
+				tiempo += tiempo_avanzado;
 
 				//iterar en esta funcion desde el tiempo anterior al tiempo actual 
 				//y ver si se ejecuta algun proceso pasa de lista pendeing a active
@@ -299,20 +329,31 @@ int main(int argc, char const *argv[])
 			}
 			printf("REPORT START\n");
 			printf("TIME %d\n", tiempo);
-			//Reporto cada grupo en orden 
-			//GROUP <GID> <NUM_PROGRAMAS_GRUPO>
-			printf("GROUP\n ");
+
+			//Reportar los pending
+			GroupNode* current_pending = group_list_pending->next;
+			while (current_pending != NULL)
+			{
+				printf("GROUP %d %d\n", current_pending->group->gid, current_pending->group->cantidad_procesos);
+				//Reportar procesosdel grupo
+				Process* father = current_pending->group->father;
+				report_processes_not_finished(father, 0);
+				current_pending =current_pending->next;	
+			}
+
+			//Reporta todos los grupos ready
+			GroupNode* current_ready = group_list_ready->next;
+			while (current_ready != NULL)
+			{
+				printf("GROUP %d %d\n", current_ready->group->gid, current_ready->group->cantidad_procesos);
+				//Reportar procesosdel grupo
+				Process* father = current_ready->group->father;
+				report_processes_finished(father, 0);
+				current_ready =current_ready->next;	
+			}
 			printf("REPORT END\n");
 			
-		}
-		//Imprimo los grupos activos y pendientes
-		// printf("\n GRUPOS ACTIVOS\n");
-		// printAllGroups(group_list_active);
-		// printf("\n");
-
-		// printf("\n GRUPOS PENDIENTES\ns");
-		// printAllGroups(group_list_pending);
-		// printf("\n");	
+		}	
 	}
 }
 
