@@ -57,41 +57,41 @@ const char* state_to_string(State state) {
 
 //report processes
 
-void report_processes_not_finished(Process* process, int depth) {
+void report_processes_not_finished(Process* process, int depth, FILE* output_file) {
     if (process == NULL) return;
     
-    
-    //Reporto solol los que no han terminado
-    if (process->state != FINISHED) {
-        // Imprimir espacios para indentar según el nivel en la jerarquía
-        for (int i = 0; i < depth; i++) {
-            printf("  ");
-        }
-        
+    //printf("process state %s %d\n", state_to_string(process->state), process->pid);
+    //Reporto los que esta waiting o running
+    if (process->state == WAITING || process->state == RUNNING) {
         //PROGRAM <PID> <PPID> <GID> <STATUS_PROCESO> <CPU_TOTAL_USADA>
         printf("PROGRAM %d %d %d %s %d\n",
                process->pid, process-> ppid, process->gid, state_to_string(process->state), process->time_in_cpu);
+        fprintf(output_file, "PROGRAM %d %d %d %s %d\n",
+               process->pid, process-> ppid, process->gid, state_to_string(process->state), process->time_in_cpu);
+               
     }
     // Recorrer y reportar recursivamente cada hijo
     for (int i = 0; i < process->nh; i++) {
-        report_processes_not_finished(process->children[i], depth + 1);
+        report_processes_not_finished(process->children[i], depth + 1, output_file);
     }
 }
 
 
-void report_processes_finished(Process* process, int depth) {
+void report_processes_finished(Process* process, int depth, FILE* output_file) {
     if (process == NULL) return;
     
     if (process->state == FINISHED) {
-        // Imprimir espacios para indentar según el nivel en la jerarquía
-        for (int i = 0; i < depth; i++) {
-            printf("  ");
-        }
-        
         // Imprimir información del proceso actual
         //PROGRAM <PID> <PPID> <GID> <STATUS_PROCESO> <CPU_TOTAL_USADA>
         printf("PROGRAM %d %d %d %s %d\n",
                process->pid, 0, 0, state_to_string(process->state), process->time_in_cpu);
+
+        fprintf(output_file, "PROGRAM %d %d %d %s %d\n",
+               process->pid, 0, 0, state_to_string(process->state), process->time_in_cpu);
+    }
+
+    for (int i = 0; i < process->nh; i++) {
+        report_processes_finished(process->children[i], depth + 1, output_file);
     }
 }
 

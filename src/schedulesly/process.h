@@ -6,7 +6,8 @@ typedef enum {
     RUNNING,
     READY,
     WAITING,
-    FINISHED
+    FINISHED, 
+    NOT_STARTED
 } State;
 
 //Estructura del proceso
@@ -29,6 +30,6 @@ typedef struct Process {
 
 //Función que crea un proceso create_process
 //el pid, ppig y gid los agrego despues
-Process* create_process( int ci, int nh, int cf, bool is_father_max);
+Process* create_process( int ci, int nh, int cf, bool is_father_max, int line_ci, int arg_ci);
 
 void assign_gid_recursively(Process* process, int gid);

@@ -1,5 +1,7 @@
 #pragma once
 #include "process.h"
+#include <stdbool.h>
+#include <stdio.h>
 //I have to do the struct group thar contains proccesses , each group has procceses that have a father and childs, the childs can also have childs.
 //I have to do the functions that are in the group.h file
 //Each groups needs to have a group id, time of arrival and unit of works (q) (CPU time , burst)
@@ -25,7 +27,7 @@ Group* create_group(int time_arrival, int qstart, int qmin, int qdelta);
 void count_processes(Group* group);
 
 //Report processes
-void report_processes_not_finished(Process* process, int depth);
+void report_processes_not_finished(Process* process, int depth, FILE* output_file);
 
 //Report processes findihes
-void report_processes_finished(Process* process, int depth);
+void report_processes_finished(Process* process, int depth, FILE* output_file);

@@ -5,7 +5,7 @@
 //create process build it correctly with all the parameters
 // Process* create_process(int ti, int ci, int nh, int ce, int cf);
 
-Process* create_process(int ci, int nh, int cf, bool is_father_max) {
+Process* create_process(int ci, int nh, int cf, bool is_father_max, int line_ci, int arg_ci) {
     Process* new_process = (Process*)malloc(sizeof(Process)); // Reservamos memoria para el nuevo proceso
     if (new_process == NULL) {
         // Manejo de error, en caso de que malloc falle
@@ -15,12 +15,12 @@ Process* create_process(int ci, int nh, int cf, bool is_father_max) {
     new_process->nh = nh;
     new_process->is_father_max = is_father_max;
     //Asigno el state = WAITING que es una strcut que se encuentra en process.h
-    new_process->state = READY;
+    new_process->state = NOT_STARTED;
     new_process->pid = -1;
     new_process->ppid = -1;
     new_process->time_in_cpu = 0;
-    // new_process->line_ci = line_ci;
-    // new_process->arg_ci = arg_ci;
+    new_process->line_ci = line_ci;
+    new_process->arg_ci = arg_ci;
     //construir array ce que es del tamaño nh - 1 
     //if is father max la lista es de nh-1 si no el atributo ce va a ser una lista vacia
     if (is_father_max && nh > 0) {
