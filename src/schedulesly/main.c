@@ -197,6 +197,11 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo){
 		process->cf -= cfToProcess;
 		tiempo_proceso += cfToProcess;
 		qstart -= cfToProcess;
+		if (process->cf == 0)
+		{
+			process->state = FINISHED;
+			//printf("END %d TIME %d\n", process->pid, tiempo + tiempo_proceso);
+		}
 	}
 	return tiempo_proceso;
 }
