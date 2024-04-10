@@ -49,9 +49,9 @@ void assign_gid_recursively(Process* process, int gid) {
 
     process->gid = gid; // Asigna el gid al proceso actual
 
-    
     for (int i = 0; i < process->nh; i++) {
         assign_gid_recursively(process->children[i], gid);
+        printf("GIDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD %d\n", gid);
     }
 }
 

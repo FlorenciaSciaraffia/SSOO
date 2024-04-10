@@ -26,6 +26,7 @@ typedef struct Process {
     int time_in_cpu;
     int line_ci;
     int arg_ci;
+    int time_finished;
     struct Process** children;
 } Process;
 

@@ -159,8 +159,10 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 		group->cantidad_procesos++;
 		//si no hay padre, el ppid es 0
 		if (process->is_father_max==true)
-		{
+		{	
 			process->ppid = 0;
+			group->gid = process->pid;
+			assign_gid_recursively(process, group->gid);
 		}
 		else
 		{
@@ -185,7 +187,7 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	//RUN <PID> <TIEMPO_TRABAJADO>
 	if (tiempo_proceso > 0)
 	{
-		fprintf(output_file, "Holaaaa 1\n");
+		//fprintf(output_file, "Holaaaa 1\n");
 		printf("RUN %d %d\n", process->pid, tiempo_proceso);
 		fprintf(output_file, "RUN %d %d\n", process->pid, tiempo_proceso);
 
@@ -285,17 +287,6 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	//Si aun quedan unidades de trabajo procesar el cf
 	if (qstart > 0 ||(process->cf == 0 && process->ci == 0))
 	{	
-
-		//Siel estado era waiting imprimo un resume 
-		// fprintf(output_file, "state: %d\n", process->state);
-		// fprintf(output_file, "cf: %d\n", process->cf);
-		// fprintf(output_file, "cf_original: %d\n", process->cf_original);
-		// if (process->state == WAITING  && process->cf == process->cf_original )
-		// {
-		// 	printf("RESUME %d\n", process->pid);
-		// 	fprintf(output_file, "RESUME %d\n", process->pid);
-		// }
-		//Procesamos el tiempo antes de crear los hijos, osea el cf
 		int cfToProcess = min(qstart, process->cf);
 		process->cf -= cfToProcess;
 		tiempo_proceso += cfToProcess;
@@ -320,6 +311,7 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 		if (process->cf == 0 && process->ci == 0 && process->state != FINISHED)
 		{
 			process->state = FINISHED;
+			process ->time_finished = tiempo + tiempo_avanzado_total;
 			printf("Proceso terminado: %d\n", process->pid);
 			//print el run
 			printf("END %d TIME %d\n", process->pid, tiempo + tiempo_avanzado_total);
@@ -487,7 +479,6 @@ int main(int argc, char const *argv[])
 				current_active = current_active->next;
 			}
 			
-
 			sort_finished_processes(finished_process, finished_process_count);
 
 			if (finished_process_count > 0)

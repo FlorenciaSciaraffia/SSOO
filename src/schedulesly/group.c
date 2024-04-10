@@ -63,9 +63,9 @@ void report_processes(Process* process, FILE* output_file) {
 
     if (process->state == RUNNING || process->state == READY || process->state == WAITING) {
         printf("PROGRAM %d %d %d %s %d\n",
-               process->pid, process-> ppid, process->pid, state_to_string(process->state), process->time_in_cpu);
+               process->pid, process-> ppid, process->gid, state_to_string(process->state), process->time_in_cpu);
         fprintf(output_file, "PROGRAM %d %d %d %s %d\n",
-               process->pid, process-> ppid, process->pid, state_to_string(process->state), process->time_in_cpu);
+               process->pid, process-> ppid, process->gid, state_to_string(process->state), process->time_in_cpu);
                
     }
     // Recorrer y reportar recursivamente cada hijo
@@ -96,7 +96,7 @@ void sort_finished_processes(Process* processes[], int count) {
     do {
         swapped = false;
         for (int i = 0; i < count - 1; i++) {
-            if (processes[i]->time_in_cpu > processes[i + 1]->time_in_cpu) {
+            if (processes[i]->time_finished > processes[i + 1]->time_finished) {
                 Process* temp = processes[i];
                 processes[i] = processes[i + 1];
                 processes[i + 1] = temp;
