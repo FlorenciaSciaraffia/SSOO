@@ -20,6 +20,7 @@ Group* create_group( int time_arrival, int qstart, int qdelta, int qmin) {
     new_group->qmin = qmin;
     new_group->father = NULL; //inicializamos el padre en NULL no lo tiene asgnado aún
     new_group->cantidad_procesos = 0;
+    new_group->cantidad_procesos_corriendo = 0;
 
     return new_group;
 }
@@ -128,3 +129,14 @@ void report_processes_finished(Process* process, int depth, FILE* output_file) {
     }
 }
 
+//contar procesos corriendo
+void count_running_processes(Process* process, Group* group, int proceso_corriendo) {
+    group->cantidad_procesos_corriendo = proceso_corriendo;
+    if (process == NULL) return;
+    if (process->state == RUNNING || process->state == READY || process->state == WAITING) {
+        group->cantidad_procesos_corriendo++;
+    }
+    for (int i = 0; i < process->nh; i++) {
+        count_running_processes(process->children[i], group,  group->cantidad_procesos_corriendo);
+    }
+}

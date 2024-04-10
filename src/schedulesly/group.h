@@ -15,6 +15,7 @@ typedef struct {
     int qdelta;
     //PADRE que es un proceso
     int cantidad_procesos;
+    int cantidad_procesos_corriendo;
     Process* father;
 } Group;
 
@@ -38,3 +39,6 @@ void report_processes_finished(Process* process, int depth, FILE* output_file);
 
 
 void sort_finished_processes(Process* processes[], int count) ;
+
+//void contar procesos corriendo 
+void count_running_processes(Process* process, Group *group, int count);

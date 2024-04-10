@@ -428,8 +428,10 @@ int main(int argc, char const *argv[])
 			GroupNode* current_active = group_list_active->next;
 			while (current_active != NULL && current_active->group->father->pid != -1)
 			{	
-				printf("GROUP %d %d\n", current_active->group->father->pid, current_active->group->cantidad_procesos);
-				fprintf(output_file, "GROUP %d %d\n", current_active->group->father->pid, current_active->group->cantidad_procesos - finished_process_count);
+				//contar procesos corriendo
+				count_running_processes(current_active->group->father, current_active->group, 0);
+				printf("GROUP %d %d\n", current_active->group->father->pid, current_active->group->cantidad_procesos_corriendo);
+				fprintf(output_file, "GROUP %d %d\n", current_active->group->father->pid, current_active->group->cantidad_procesos_corriendo);
 				//Reportar procesosdel grupo
 				report_processes(current_active->group->father, output_file);	
 				current_active = current_active->next;
