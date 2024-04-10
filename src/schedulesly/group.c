@@ -63,9 +63,9 @@ void report_processes(Process* process, FILE* output_file) {
 
     if (process->state == RUNNING || process->state == READY || process->state == WAITING) {
         printf("PROGRAM %d %d %d %s %d\n",
-               process->pid, process-> ppid, process->gid, state_to_string(process->state), process->time_in_cpu);
+               process->pid, process-> ppid, process->pid, state_to_string(process->state), process->time_in_cpu);
         fprintf(output_file, "PROGRAM %d %d %d %s %d\n",
-               process->pid, process-> ppid, process->gid, state_to_string(process->state), process->time_in_cpu);
+               process->pid, process-> ppid, process->pid, state_to_string(process->state), process->time_in_cpu);
                
     }
     // Recorrer y reportar recursivamente cada hijo

@@ -94,6 +94,7 @@ GroupNode* readFileAndCreatStructures(char *file_name){
 			fscanf(file, "%d", &cf);
 			//printf("CF: %d\n", cf);
 			new_process->cf = cf;
+			new_process->cf_original = cf;
 			// termina el for 
 			printf("No tiene hijos el proceso padre\n");
 		}
@@ -108,6 +109,7 @@ GroupNode* readFileAndCreatStructures(char *file_name){
 			//printf("CF: %d\n", cf);
 			//lo asingo al padre
 			new_process->cf = cf;
+			new_process->cf_original = cf;
 			//imprimo la info del padre
 			printf("Proceso padre actualizado valor CF: CI:%d - NH:%d - CE:%ls - CF:%d\n", new_process->ci, new_process->nh, new_process->ce, new_process->cf);
 		}
@@ -143,6 +145,12 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	//Si es la primera vez que se corre el ci tengo que asigan el pid y ppid
 	if (process->pid == -1)
 	{	
+		//si el proceso es el padre maximo:
+		//asginar el gip = a pid
+		// if (process->is_father_max)
+		// {
+		// 	group->gid = process->pid;
+		// }
 		//cambio estado a READY
 		process->state = READY;
 		printf("Proceespid: %d\n", process->pid);
@@ -177,54 +185,97 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	//RUN <PID> <TIEMPO_TRABAJADO>
 	if (tiempo_proceso > 0)
 	{
+		fprintf(output_file, "Holaaaa 1\n");
 		printf("RUN %d %d\n", process->pid, tiempo_proceso);
 		fprintf(output_file, "RUN %d %d\n", process->pid, tiempo_proceso);
+
 		process->state = RUNNING;
 	}
+
 	//si quedan unidades de trabajo por trabajar y hay hijos por recorrer: 
-	if (qstart > 0 && process->nh > 0)
+	if (qstart >= 0 && process->nh > 0)
 	{
 		printf("Proceso con hijos\n");
 		printf("Proceso actualizacion como va:CI %d -NH %d -CF %d - PID  %d\n", process->ci, process->nh, process->cf, process->pid	);
-		//Procesamos los hijos
-		for (int i = 0; i < process->nh && qstart>0 ; i++)
+
+		for (int i = 0; i < process->nh && qstart>=0 ; i++)
 		{	
 			int tiempo_hijo = 0;
-			//Procesamos cada hijo
-			//Imprimo wait solo si el estado anterior era running
-			if (process->state == RUNNING)
-			{
+			
+			if (qstart  == 0 && process->ci==0 ){
+				//WAIT
 				printf("WAIT %d\n", process->pid);
 				fprintf(output_file, "WAIT %d\n", process->pid);
+				//lamo a recursiva 
+				tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
 			}
-			process->state = WAITING;
-			if (i>0){
+			else if (qstart > 0) {
+			//si venia de correr pasa a wait 
+			// if (process->state == RUNNING)
+			// {
+			// 	printf("WAIT %d\n", process->pid);
+			// 	fprintf(output_file, "WAIT %d\n", process->pid);
+			// 	process->state = WAITING;
+			// }
+			
+			//solo entra si el proceso del hijo ya termino y hay mas de un hijo y no es el ultimo hijo el proceso terminado
+			//Si i mayor a 0 y ell hijo anterior termino
+			if (i>0 && process->children[i-1]->state == FINISHED){
+				//fprintf(output_file, "entre a i>0  %d\n" , process->children[i]->pid);
 				//Procesamos el tiempo antes de crear los hijos, osea el ce
+				//cambia a runing
+				process->state = RUNNING; 
+				//imprimo el qstart
+				//fprintf(output_file,"qstart en i>0: %d\n", qstart);
+				//imprimo el ce 
+				//fprintf(output_file, "ce en i>0: %d\n", process->ce[i-1]);
 				int ceToProcess = min(qstart, process->ce[i-1]);
 				process->ce[i-1] -= ceToProcess;
 				tiempo_proceso += ceToProcess;
 				tiempo_avanzado_total += ceToProcess;
-				printf("Antes resta qsatrt: %d\n", qstart);
 				qstart -= ceToProcess;
-				printf("qsatrt: %d\n", qstart);	
-				printf("CE to process: %d\n", ceToProcess);
-				process->state = RUNNING;
-				printf("RESUME%d\n", process->pid);
-				printf("RUN %d %d\n", process->pid, ceToProcess);
-				printf("WAIT %d\n", process->pid);
-				fprintf(output_file, "RESUME %d\n", process->pid);
-				fprintf(output_file, "RUN %d %d\n", process->pid, ceToProcess);
-				fprintf(output_file, "WAIT %d\n", process->pid);
-				//LLamo al proceso hijo siempre
-				tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
+				//Si el ce queda en cero cambia a waiting pq va a correr otro hijo 
+				if (process->ce[i-1] == 0 )
+				{	
+					//imprimir state y pid
+					//fprintf(output_file, "state en i>0: %d PID %d\n", process->state, process->pid);	
+
+					if(ceToProcess > 0)
+
+					{
+						// printf("RESUME%d\n", process->pid);
+						// fprintf(output_file, "RESUME %d\n", process->pid);
+						fprintf(output_file, "Holaaaa 2 \n");
+						printf("RUN %d %d\n", process->pid, ceToProcess);
+						fprintf(output_file, "RUN %d %d\n", process->pid, ceToProcess);
+						printf("WAIT %d\n", process->pid);
+						fprintf(output_file, "WAIT %d\n", process->pid);
+					}
+					process->state = WAITING;
+					tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
+					qstart-= tiempo_hijo;
+					tiempo_avanzado_total += tiempo_hijo;
+				}
+				else{
+					//estado waiting
+					process->state = RUNNING;
+				}
 			}
-			//Aca debe correr si quedan unidades de qstart
-			if (qstart > 0)
-			{
+			
+			//Si es el primer hijo o el hijo anterior no termino 
+			//no hay ce 
+			else {
+			     
+				//solo imprimir si es el primer hijo no el ultimo
+				if (i == 0 && process->children[i]->pid == -1){
+					fprintf(output_file, "WAIT %d\n", process->pid);
+					printf("WAIT %d\n", process->pid);
+				}
 				//Procesamos el hijo
 				tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
 				qstart-= tiempo_hijo;
 				tiempo_avanzado_total += tiempo_hijo;
+			}
 			}
 		
 		}
@@ -232,15 +283,18 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	}
 	
 	//Si aun quedan unidades de trabajo procesar el cf
-	if (qstart > 0 || process->cf == 0)
+	if (qstart > 0 ||(process->cf == 0 && process->ci == 0))
 	{	
-		//Si el estado anterior era waitng tiene que imprimir resume <pid>
-		if (process->state == WAITING)
-		{
-			printf("RESUME %d\n", process->pid);
-			fprintf(output_file, "RESUME %d\n", process->pid);
-		}
-		
+
+		//Siel estado era waiting imprimo un resume 
+		// fprintf(output_file, "state: %d\n", process->state);
+		// fprintf(output_file, "cf: %d\n", process->cf);
+		// fprintf(output_file, "cf_original: %d\n", process->cf_original);
+		// if (process->state == WAITING  && process->cf == process->cf_original )
+		// {
+		// 	printf("RESUME %d\n", process->pid);
+		// 	fprintf(output_file, "RESUME %d\n", process->pid);
+		// }
 		//Procesamos el tiempo antes de crear los hijos, osea el cf
 		int cfToProcess = min(qstart, process->cf);
 		process->cf -= cfToProcess;
@@ -248,19 +302,35 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 		tiempo_avanzado_total += cfToProcess;
 		qstart -= cfToProcess;
 		//impirimir runnig si anterior era waiting y el tiempo de proceso es mayor a 0
-		if (tiempo_proceso > 0 && process->state == WAITING)
-		{
+		// if (tiempo_proceso > 0 && process->state == WAITING)
+		// {
+		// 	fprintf(output_file, "Holaaaa 3\n");
+		// 	printf("RUN %d %d\n", process->pid, tiempo_proceso);
+		// 	fprintf(output_file, "RUN %d %d\n", process->pid, tiempo_proceso);
+		// }
+		if (cfToProcess > 0){
 			printf("RUN %d %d\n", process->pid, tiempo_proceso);
 			fprintf(output_file, "RUN %d %d\n", process->pid, tiempo_proceso);
 		}
-		process->state = RUNNING;
-
-		if (process->cf == 0 && process->ci == 0)
+		if (process->state != FINISHED)
+		{
+			process->state = RUNNING;
+		}
+		
+		if (process->cf == 0 && process->ci == 0 && process->state != FINISHED)
 		{
 			process->state = FINISHED;
 			printf("Proceso terminado: %d\n", process->pid);
+			//print el run
 			printf("END %d TIME %d\n", process->pid, tiempo + tiempo_avanzado_total);
 			fprintf(output_file, "END %d TIME %d\n", process->pid, tiempo + tiempo_avanzado_total);
+			//ACA SI EL PROCESO PADRE DEL HIJO ESTA EN WAIT IMPRIMIR RESUME 
+			
+			if (process->ppid != 0)
+			{
+				printf("RESUME %d\n", process->ppid);
+				fprintf(output_file, "RESUME %d\n", process->ppid);
+			}
 		}
 	}
 	process->time_in_cpu += tiempo_proceso;
@@ -324,9 +394,7 @@ int main(int argc, char const *argv[])
 		//Verifico  y activo grupos en el tiempo actual
 		check_and_move_groups(group_list_pending, group_list_active, tiempo);
 
-		
-
-		
+		//Si no hay grupos activos en la iteracion
 		if (group_list_active->next == NULL)
 		{ 	
 			while(group_list_active->next == NULL)
@@ -376,32 +444,22 @@ int main(int argc, char const *argv[])
 
 				//iterar en esta funcion desde el tiempo anterior al tiempo actual 
 				//y ver si se ejecuta algun proceso pasa de lista pendeing a active
-				for (int i = tiempo_anterior; i <= tiempo; i++)
-				{
-					// printf("Tiempo actual en iteracion pending: %d\n", i);
-					check_and_move_groups(group_list_pending, group_list_active, i);
-				}
+				
 
 				//Hacer update de qstart del grupo 
 				current = current->next;
 			}
+			for (int i = tiempo_anterior; i <= tiempo; i++)
+				{
+					// printf("Tiempo actual en iteracion pending: %d\n", i);
+					check_and_move_groups(group_list_pending, group_list_active, i);
+				}
 			/////////////ACÁ HAGO EL REPORTE FINAL ///////////
 			finished_process_count = 0;
 			printf("REPORT START\n");
 			fprintf(output_file, "REPORT START\n");
 			printf("TIME %d\n", tiempo);
 			fprintf(output_file, "TIME %d\n", tiempo);
-			//Reportar los pno terminados
-			GroupNode* current_active = group_list_active->next;
-			while (current_active != NULL)
-			{	
-				printf("ENTRO ACA\n");
-				printf("GROUP %d %d\n", current_active->group->father->gid, current_active->group->cantidad_procesos);
-				fprintf(output_file, "GROUP %d %d\n", current_active->group->father->gid, current_active->group->cantidad_procesos);
-				//Reportar procesosdel grupo
-				report_processes(current_active->group->father, output_file);	
-				current_active = current_active->next;
-			}
 			//Recolectamos los procesos terminados de grupos no terminados
 			GroupNode* current_ready = group_list_active->next;
 			while (current_ready != NULL)
@@ -417,6 +475,18 @@ int main(int argc, char const *argv[])
 				collect_finished_processes(current_finished->group->father, finished_process, &finished_process_count);
 				current_finished = current_finished->next;
 			}
+			//Reportar los pno terminados
+			GroupNode* current_active = group_list_active->next;
+			while (current_active != NULL && current_active->group->father->pid != -1)
+			{	
+				printf("ENTRO ACA\n");
+				printf("GROUP %d %d\n", current_active->group->father->pid, current_active->group->cantidad_procesos - finished_process_count);
+				fprintf(output_file, "GROUP %d %d\n", current_active->group->father->pid, current_active->group->cantidad_procesos - finished_process_count);
+				//Reportar procesosdel grupo
+				report_processes(current_active->group->father, output_file);	
+				current_active = current_active->next;
+			}
+			
 
 			sort_finished_processes(finished_process, finished_process_count);
 

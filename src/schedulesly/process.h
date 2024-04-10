@@ -22,6 +22,7 @@ typedef struct Process {
     bool is_father_max; //Si es el padre máximo
     int* ce; //tiempo que corre entre sus hijos
     int cf;  //tiempo que corre despues dde crear y correr todos los hijos
+    int cf_original;
     int time_in_cpu;
     int line_ci;
     int arg_ci;
