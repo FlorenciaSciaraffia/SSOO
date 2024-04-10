@@ -10,6 +10,21 @@
 
 int currentPID = 1;
 
+void set_process_state_to_ready(Process* process, int target_pid) {
+    if (process == NULL) return;
+    
+    // Verificar si este proceso es el que buscamos
+    if (process->pid == target_pid) {
+        process->state = READY;
+        return;
+    }
+    
+    // Si no es el proceso que buscamos, buscar en sus hijos
+    for (int i = 0; i < process->nh; i++) {
+        set_process_state_to_ready(process->children[i], target_pid);
+    }
+}
+
 void readChilds(FILE *file, Process* father, int nh, int line_ci, int arg){
 	 for (int i = 0; i < nh; i++) {
 		if (i > 0)
@@ -25,6 +40,7 @@ void readChilds(FILE *file, Process* father, int nh, int line_ci, int arg){
 		arg++;
 		arg++;
 		Process* new_process_child = create_process(child_ci, child_nh, 0, false, line_ci, arg);
+		new_process_child->ci_original = child_ci;
 		father->children[i] = new_process_child;
 		if (child_nh == 0)
 		{
@@ -118,7 +134,7 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	int tiempo_avanzado_total= 0;
 	//Procesamos el tiempo antes de crear los hijos, osea el ci
 	//Si es la primera vez que se corre el ci tengo que asigan el pid y ppid
-	if (process->pid == -1)
+	if (process->pid == -1 )
 	{	
 		//cambio estado a READY
 		process->state = READY;
@@ -148,6 +164,7 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	tiempo_proceso += timeToProcess;
 	tiempo_avanzado_total += timeToProcess;
 	qstart -= timeToProcess;
+	fprintf(output_file, "Linea 147 PID: %d State %d\n", process->pid, process->state);
 	
 	//Reporto el tiempo que corrio
 	//RUN <PID> <TIEMPO_TRABAJADO>
@@ -172,10 +189,11 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 		{	
 			int tiempo_hijo = 0;
 			
-			if (qstart  == 0 && process->ci==0 ){
+			if (qstart  == 0 && process->ci==0 && process->ci_original!=0){
 				//WAIT
+				fprintf(output_file, "ESTADO %d", process->state);
 				printf("WAIT %d\n", process->pid);
-				fprintf(output_file, "WAIT %d\n", process->pid);
+				fprintf(output_file, "WAIT %d line 178 \n", process->pid);
 				//lamo a recursiva 
 				process->state = WAITING;
 				fprintf(output_file, "Linea 180 PID: %d State %d\n", process->pid, process->state);
@@ -202,17 +220,17 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 						printf("RUN %d %d\n", process->pid, ceToProcess);
 						fprintf(output_file, "RUN %d %d\n", process->pid, ceToProcess);
 						printf("WAIT %d\n", process->pid);
-						fprintf(output_file, "WAIT %d\n", process->pid);
+						fprintf(output_file, "WAIT %d line 204\n", process->pid);
 					}
 					process->state = WAITING;
 					fprintf(output_file, "Linea 202 PID: %d State %d\n", process->pid, process->state);
 					tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
 					qstart-= tiempo_hijo;
 					tiempo_avanzado_total += tiempo_hijo;
-					if (process->children[i]-> ci != 0 ||process->children[i]-> cf != 0 ){
+					if ((process->children[i]-> ci != 0 ||process->children[i]-> cf != 0 )&& qstart > 0){
 						process->children[i]->state= RUNNING;
 						process->state = WAITING;
-						fprintf(output_file, "Linea 209 PID: %d State %d\n", process->pid, process->state);
+						fprintf(output_file, "Linea 209 PID: %d State %d\n", process->pid, process->children[i]->state);
 					}
 				}
 				else{
@@ -228,7 +246,7 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 			     
 				//solo imprimir si es el primer hijo no el ultimo
 				if (i == 0 && process->children[i]->pid == -1){
-					fprintf(output_file, "WAIT %d\n", process->pid);
+					fprintf(output_file, "WAIT %d line 231\n", process->pid);
 					printf("WAIT %d\n", process->pid);
 				}
 				//Procesamos el hijo
@@ -287,6 +305,10 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 			{
 				printf("RESUME %d\n", process->ppid);
 				fprintf(output_file, "RESUME %d\n", process->ppid);
+				//Pasa a READY el proceso con pid = process->ppid
+				//Pasar a ready el proceso con pid = process->ppid
+				//tengo que recorrer en mi grupo los procesos
+				set_process_state_to_ready(group->father, process->ppid);
 			}
 		}
 	}

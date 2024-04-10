@@ -18,6 +18,7 @@ typedef struct Process {
     State state;
     int ti; //Tiempo de llegada a la cola
     int ci; //Tiempo de CPU antes de crear un hijo
+    int ci_original;
     int nh; //Numero de hijos que creara
     bool is_father_max; //Si es el padre máximo
     int* ce; //tiempo que corre entre sus hijos
