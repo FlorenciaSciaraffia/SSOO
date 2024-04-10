@@ -288,10 +288,10 @@ int main(int argc, char const *argv[])
 {
 	char *file_name = (char *)argv[1];
 	InputFile *input_file = read_file(file_name);
-
-	Process* finished_process[1024];
-	int finished_process_count = 0;
 	
+	//finished
+	Process* finished_process[1000];
+	int finished_process_count = 0;
 
 	GroupNode* group_list_pending;
 	GroupNode* group_list_active;
@@ -384,8 +384,9 @@ int main(int argc, char const *argv[])
 
 				//Hacer update de qstart del grupo 
 				current = current->next;
-				
 			}
+			/////////////ACÁ HAGO EL REPORTE FINAL ///////////
+			finished_process_count = 0;
 			printf("REPORT START\n");
 			fprintf(output_file, "REPORT START\n");
 			printf("TIME %d\n", tiempo);
@@ -433,6 +434,8 @@ int main(int argc, char const *argv[])
 			}
 			printf("REPORT END\n");
 			fprintf(output_file, "REPORT END\n");
+			
+			///////// TERMINA EL REPORTE FINAL //////////
 			
 		}	
 	}
