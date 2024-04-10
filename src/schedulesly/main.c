@@ -137,7 +137,7 @@ int max(int a, int b) {
 int process_process(Process* process, int qstart, int parentPID, int tiempo, Group* group, FILE* output_file){
 	int tiempo_proceso= 0;
 	int tiempo_avanzado_total= 0;
-	printf("qstart: %d\n", qstart);
+	printf("qstart cuando llamo funcion: %d\n", qstart);
 	printf("Proceso a procesar:CI %d -NH %d -CF %d - PID  %d\n", process->ci, process->nh, process->cf, process->pid);
 	//Procesamos el tiempo antes de crear los hijos, osea el ci
 	//Si es la primera vez que se corre el ci tengo que asigan el pid y ppid
@@ -204,8 +204,19 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 				process->ce[i-1] -= ceToProcess;
 				tiempo_proceso += ceToProcess;
 				tiempo_avanzado_total += ceToProcess;
+				printf("Antes resta qsatrt: %d\n", qstart);
 				qstart -= ceToProcess;
+				printf("qsatrt: %d\n", qstart);	
 				printf("CE to process: %d\n", ceToProcess);
+				process->state = RUNNING;
+				printf("RESUME%d\n", process->pid);
+				printf("RUN %d %d\n", process->pid, ceToProcess);
+				printf("WAIT %d\n", process->pid);
+				fprintf(output_file, "RESUME %d\n", process->pid);
+				fprintf(output_file, "RUN %d %d\n", process->pid, ceToProcess);
+				fprintf(output_file, "WAIT %d\n", process->pid);
+				//LLamo al proceso hijo siempre
+				tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
 			}
 			//Aca debe correr si quedan unidades de qstart
 			if (qstart > 0)
@@ -215,6 +226,7 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 				qstart-= tiempo_hijo;
 				tiempo_avanzado_total += tiempo_hijo;
 			}
+		
 		}
         
 	}
@@ -276,7 +288,9 @@ int main(int argc, char const *argv[])
 {
 	char *file_name = (char *)argv[1];
 	InputFile *input_file = read_file(file_name);
-	
+
+	Process* finished_process[1024];
+	int finished_process_count = 0;
 	
 
 	GroupNode* group_list_pending;
@@ -376,30 +390,46 @@ int main(int argc, char const *argv[])
 			fprintf(output_file, "REPORT START\n");
 			printf("TIME %d\n", tiempo);
 			fprintf(output_file, "TIME %d\n", tiempo);
-			//printAllGroups(group_list_pending);
-			//Reportar los pending
+			//Reportar los pno terminados
 			GroupNode* current_active = group_list_active->next;
 			while (current_active != NULL)
 			{	
-				//printf("Entro acá");
+				printf("ENTRO ACA\n");
 				printf("GROUP %d %d\n", current_active->group->father->gid, current_active->group->cantidad_procesos);
 				fprintf(output_file, "GROUP %d %d\n", current_active->group->father->gid, current_active->group->cantidad_procesos);
 				//Reportar procesosdel grupo
-				Process* father = current_active->group->father;
-				report_processes_not_finished(father, 0, output_file);
-				current_active =current_active->next;	
+				report_processes(current_active->group->father, output_file);	
+				current_active = current_active->next;
 			}
-
-			//Reporta todos los grupos ready
-			GroupNode* current_ready = group_list_ready->next;
+			//Recolectamos los procesos terminados de grupos no terminados
+			GroupNode* current_ready = group_list_active->next;
 			while (current_ready != NULL)
 			{
-				printf("GROUP %d %d\n", 0, current_ready->group->cantidad_procesos);
-				fprintf(output_file, "GROUP %d %d\n", 0, current_ready->group->cantidad_procesos);
-				//Reportar procesosdel grupo
-				Process* father = current_ready->group->father;
-				report_processes_finished(father, 0, output_file);
-				current_ready =current_ready->next;	
+				collect_finished_processes(current_ready->group->father, finished_process, &finished_process_count);
+				current_ready = current_ready->next;
+			}
+
+			//Recolectamos los procesos de grupos terminados
+			GroupNode* current_finished = group_list_ready->next;
+			while (current_finished != NULL)
+			{
+				collect_finished_processes(current_finished->group->father, finished_process, &finished_process_count);
+				current_finished = current_finished->next;
+			}
+
+			sort_finished_processes(finished_process, finished_process_count);
+
+			if (finished_process_count > 0)
+			{
+				printf("GROUP %d %d\n", 0, finished_process_count);
+				fprintf(output_file, "GROUP %d %d\n", 0, finished_process_count);
+			}
+
+			for (int i = 0; i < finished_process_count; i++) {
+				printf("PROGRAM %d %d %d %s %d\n",
+					finished_process[i]->pid, 0, 0, "FINISHED", finished_process[i]->time_in_cpu);
+				fprintf(output_file, "PROGRAM %d %d %d %s %d\n",
+					finished_process[i]->pid, 0, 0, "FINISHED", finished_process[i]->time_in_cpu);
 			}
 			printf("REPORT END\n");
 			fprintf(output_file, "REPORT END\n");

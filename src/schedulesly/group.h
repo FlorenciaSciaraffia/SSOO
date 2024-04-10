@@ -27,7 +27,14 @@ Group* create_group(int time_arrival, int qstart, int qmin, int qdelta);
 void count_processes(Group* group);
 
 //Report processes
-void report_processes_not_finished(Process* process, int depth, FILE* output_file);
+void report_processes(Process* process, FILE* output_file);
+
+//COllect finished processes
+
+void collect_finished_processes(Process* process, Process** finished_processes, int* n_finished) ;
 
 //Report processes findihes
 void report_processes_finished(Process* process, int depth, FILE* output_file);
+
+
+void sort_finished_processes(Process* processes[], int count) ;

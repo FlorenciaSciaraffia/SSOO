@@ -57,13 +57,11 @@ const char* state_to_string(State state) {
 
 //report processes
 
-void report_processes_not_finished(Process* process, int depth, FILE* output_file) {
+void report_processes(Process* process, FILE* output_file) {
     if (process == NULL) return;
     
-    //printf("process state %s %d\n", state_to_string(process->state), process->pid);
-    //Reporto los que esta waiting o running
-    if (process->state == WAITING || process->state == RUNNING) {
-        //PROGRAM <PID> <PPID> <GID> <STATUS_PROCESO> <CPU_TOTAL_USADA>
+
+    if (process->state == RUNNING || process->state == READY || process->state == WAITING) {
         printf("PROGRAM %d %d %d %s %d\n",
                process->pid, process-> ppid, process->gid, state_to_string(process->state), process->time_in_cpu);
         fprintf(output_file, "PROGRAM %d %d %d %s %d\n",
@@ -72,13 +70,48 @@ void report_processes_not_finished(Process* process, int depth, FILE* output_fil
     }
     // Recorrer y reportar recursivamente cada hijo
     for (int i = 0; i < process->nh; i++) {
-        report_processes_not_finished(process->children[i], depth + 1, output_file);
+        report_processes(process->children[i], output_file);
+    }
+}
+
+void collect_finished_processes(Process* process, Process** finished_processes, int* n_finished) {
+    if (process == NULL) return;
+
+    if (process->state == FINISHED) {
+        // Agregar el proceso actual al arreglo de procesos terminados
+        finished_processes[*n_finished] = process;
+        (*n_finished)++;
+    }
+
+    // Recorrer y reportar recursivamente cada hijo
+    for (int i = 0; i < process->nh; i++) {
+        collect_finished_processes(process->children[i], finished_processes, n_finished);
     }
 }
 
 
+//sort finished processes
+void sort_finished_processes(Process* processes[], int count) {
+    bool swapped;
+    do {
+        swapped = false;
+        for (int i = 0; i < count - 1; i++) {
+            if (processes[i]->time_in_cpu > processes[i + 1]->time_in_cpu) {
+                Process* temp = processes[i];
+                processes[i] = processes[i + 1];
+                processes[i + 1] = temp;
+                swapped = true;
+            }
+        }
+    } while (swapped);
+}
+
 void report_processes_finished(Process* process, int depth, FILE* output_file) {
+
+    //Tengo que encontrar todos los procesos terminados e imprimirlos en orden del time in cpu
+    
     if (process == NULL) return;
+    printf("EStoy entradando a imprimir los finished");
     
     if (process->state == FINISHED) {
         // Imprimir información del proceso actual
