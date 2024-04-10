@@ -115,7 +115,7 @@ void check_and_move_groups(GroupNode* pending, GroupNode* active, int currentTim
             if (current->group->time_arrival == currentTime) {
                 move_first_pending_to_active_end(pending, active);
                 movedGroup = true; // Indicar que un grupo fue movido.
-                printf("Grupo %d agregado a la lista de grupos activos\n", current->group->father->gid);
+                //printf("Grupo %d agregado a la lista de grupos activos\n", current->group->father->gid);
                 break; // Salir del bucle para reevaluar desde el principio de pending.
             }
             current = current->next;
