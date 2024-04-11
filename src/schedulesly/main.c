@@ -10,6 +10,32 @@
 
 int currentPID = 1;
 
+//Funciones liberar memoria 
+
+void free_process(Process* process) {
+	if (process == NULL) return;
+	for (int i = 0; i < process->nh; i++) {
+		free_process(process->children[i]);
+	}
+	free(process);
+}
+void free_group(Group* group) {
+	if (group == NULL) return;
+	free_process(group->father);
+	free(group);
+}
+
+void free_group_list(GroupNode* group_list){
+	GroupNode* current = group_list;
+	while (current != NULL) {
+		GroupNode* next = current->next;
+		free_group(current->group);
+		free(current);
+		current = next;
+	}
+}
+
+
 void set_process_state_to_ready(Process* process, int target_pid) {
     if (process == NULL) return;
     
@@ -139,7 +165,6 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	{	
 		//cambio estado a READY
 		process->state = READY;
-		fprintf(output_file, "Linea 125 PID: %d State %d\n", process->pid, process->state);
 		process->pid = currentPID;
 		currentPID++;
 		group->cantidad_procesos++;
@@ -165,7 +190,7 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	tiempo_proceso += timeToProcess;
 	tiempo_avanzado_total += timeToProcess;
 	qstart -= timeToProcess;
-	fprintf(output_file, "Linea 167 PID: %d State %d\n", process->pid, process->state);
+	printf( "Linea 167 PID: %d State %d\n", process->pid, process->state);
 	
 	//Reporto el tiempo que corrio
 	//RUN <PID> <TIEMPO_TRABAJADO>
@@ -174,11 +199,11 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 		printf("RUN %d %d\n", process->pid, tiempo_proceso);
 		fprintf(output_file, "RUN %d %d\n", process->pid, tiempo_proceso);
 		process->state = RUNNING;
-		fprintf(output_file, "Linea 158 PID: %d State %d\n", process->pid, process->state);
+		printf( "Linea 158 PID: %d State %d\n", process->pid, process->state);
 		if( process->ci == 0 && process->nh > 0 && qstart>=0)
 		{
 			process->state = WAITING;
-			fprintf(output_file, "Linea 163 PID: %d State %d\n", process->pid, process->state);
+			printf( "Linea 163 PID: %d State %d\n", process->pid, process->state);
 		}
 		
 	}
@@ -186,31 +211,31 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 	//si quedan unidades de trabajo por trabajar y hay hijos por recorrer: 
 	if (qstart >= 0 && process->nh > 0)
 	{
-		fprintf(output_file, "Linea 188\n");
-		fprintf(output_file, "Qstart %d\n", qstart);
+		printf( "Linea 188\n");
+		printf( "Qstart %d\n", qstart);
 		for (int i = 0; i < process->nh && qstart>=0 ; i++)
 		{	
 			int tiempo_hijo = 0;
-			fprintf(output_file, "Linea 193\n");
-			fprintf(output_file, "Proceso info PID: %d CI %d ori %d\n", process->pid, process->ci, process->ci_original);
+			printf( "Linea 193\n");
+			printf( "Proceso info PID: %d CI %d ori %d\n", process->pid, process->ci, process->ci_original);
 			if ((qstart  == 0 && process->ci==0  && i==0) ){
 				//WAIT
-				fprintf(output_file, "Linea 197");
-				fprintf(output_file, "ESTADO %d", process->state);
-				printf("WAIT %d\n", process->pid);
-				fprintf(output_file, "WAIT %d line 178 \n", process->pid);
+				printf( "Linea 197");
+				printf( "ESTADO %d", process->state);
+				fprintf(output_file,"WAIT %d\n", process->pid);
+				printf( "WAIT %d line 178 \n", process->pid);
 				//lamo a recursiva 
 				process->state = WAITING;
-				fprintf(output_file, "Linea 180 PID: %d State %d\n", process->pid, process->state);
+				printf( "Linea 180 PID: %d State %d\n", process->pid, process->state);
 				tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
 			}
 			else if (qstart > 0) {
 			//solo entra si el proceso del hijo ya termino y hay mas de un hijo y no es el ultimo hijo el proceso terminado
 			//Si i mayor a 0 y ell hijo anterior termino
-			fprintf(output_file, "Linea 205");
+			printf( "Linea 205");
 				if (i>0 && process->children[i-1]->state == FINISHED){
 					process->state = RUNNING; 
-					fprintf(output_file, "Linea 183 PID: %d State %d\n", process->pid, process->state);
+					printf( "Linea 183 PID: %d State %d\n", process->pid, process->state);
 					int ceToProcess = min(qstart, process->ce[i-1]);
 					process->ce[i-1] -= ceToProcess;
 					tiempo_proceso += ceToProcess;
@@ -225,35 +250,35 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 
 							printf("RUN %d %d\n", process->pid, ceToProcess);
 							fprintf(output_file, "RUN %d %d\n", process->pid, ceToProcess);
-							printf("WAIT %d\n", process->pid);
-							fprintf(output_file, "WAIT %d line 204\n", process->pid);
+							fprintf(output_file,"WAIT %d\n", process->pid);
+							printf("WAIT %d line 204\n", process->pid);
 						}
 						process->state = WAITING;
-						fprintf(output_file, "Linea 202 PID: %d State %d\n", process->pid, process->state);
+						printf( "Linea 202 PID: %d State %d\n", process->pid, process->state);
 						tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
 						qstart-= tiempo_hijo;
 						tiempo_avanzado_total += tiempo_hijo;
 						if ((process->children[i]-> ci != 0 ||process->children[i]-> cf != 0 )&& qstart > 0){
 							process->children[i]->state= RUNNING;
 							process->state = WAITING;
-							fprintf(output_file, "Linea 209 PID: %d State %d\n", process->pid, process->children[i]->state);
+							printf( "Linea 209 PID: %d State %d\n", process->pid, process->children[i]->state);
 						}
 					}
 					else{
 						//estado waiting
 						process->state = RUNNING;
-						fprintf(output_file, "Linea 215 PID: %d State %d\n", process->pid, process->state);
+						printf( "Linea 215 PID: %d State %d\n", process->pid, process->state);
 					}
 				}
 				
 				//Si es el primer hijo o el hijo anterior no termino 
 				//no hay ce 
 				else {
-					fprintf(output_file, "Linea 246");
+					printf( "Linea 246");
 					//solo imprimir si es el primer hijo no el ultimo
 					if (i == 0 && process->children[i]->pid == -1){
-						fprintf(output_file, "WAIT %d line 231\n", process->pid);
-						printf("WAIT %d\n", process->pid);
+						printf("WAIT %d line 231\n", process->pid);
+						fprintf(output_file,"WAIT %d\n", process->pid);
 					}
 					//Procesamos el hijo
 					tiempo_hijo += process_process(process->children[i], qstart, process->pid, tiempo+tiempo_avanzado_total, group, output_file);
@@ -267,8 +292,8 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 						}
 
 						process->state = WAITING;
-						fprintf(output_file, "Linea 236 PID: %d State %d\n", process->pid, process->state);
-						fprintf(output_file, "Linea 236 PID: %d State %d\n", process->children[i]->pid, process->children[i]->state);
+						printf("Linea 236 PID: %d State %d\n", process->pid, process->state);
+						printf("Linea 236 PID: %d State %d\n", process->children[i]->pid, process->children[i]->state);
 					}
 
 					tiempo_avanzado_total += tiempo_hijo;
@@ -295,13 +320,13 @@ int process_process(Process* process, int qstart, int parentPID, int tiempo, Gro
 		if (process->state != FINISHED)
 		{
 			process->state = RUNNING;
-			fprintf(output_file, "Linea 262 PID: %d State %d\n", process->pid, process->state);
+			printf( "Linea 262 PID: %d State %d\n", process->pid, process->state);
 		}
 		
 		if (process->cf == 0 && process->ci == 0 && process->state != FINISHED)
 		{
 			process->state = FINISHED;
-			fprintf(output_file, "Linea 268 PID: %d State %d\n", process->pid, process->state);
+			printf( "Linea 268 PID: %d State %d\n", process->pid, process->state);
 			process ->time_finished = tiempo + tiempo_avanzado_total;
 			//print el run
 			printf("END %d TIME %d\n", process->pid, tiempo + tiempo_avanzado_total);
@@ -340,10 +365,15 @@ int main(int argc, char const *argv[])
 {
 	char *file_name = (char *)argv[1];
 	InputFile *input_file = read_file(file_name);
-	
+	if (input_file == NULL)
+	{
+		return 1;
+	}
+
 	//finished
 	Process* finished_process[1000];
 	int finished_process_count = 0;
+
 
 	GroupNode* group_list_pending;
 	GroupNode* group_list_active;
@@ -351,7 +381,7 @@ int main(int argc, char const *argv[])
 	
 
 	group_list_pending = readFileAndCreatStructures(file_name);
-	input_file_destroy(input_file);
+	//input_file_destroy(input_file);
 	//Ordeno la lista por tiempo y asigno gid
 	sort_group_list(group_list_pending);
 	assign_gid(group_list_pending->next);
@@ -487,5 +517,12 @@ int main(int argc, char const *argv[])
 			
 		}	
 	}
+
+	//Liberar memoria
+	free_group_list(group_list_pending);
+	free_group_list(group_list_active);
+	free_group_list(group_list_ready);
+	fclose(output_file);
+	return 0;
 }
 
